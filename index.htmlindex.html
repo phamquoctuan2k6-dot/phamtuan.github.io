@@ -3,50 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Control</title>
+    <title>ESP32 Control Final</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; padding-top: 50px; }
-        .btn { width: 120px; height: 120px; border-radius: 50%; font-size: 20px; margin: 10px; cursor: pointer; color: white; border: none;}
-        .on { background: green; }
-        .off { background: red; }
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 30px; background-color: #222; color: white; }
+        h1 { margin-bottom: 10px; }
+        #status { color: orange; margin-bottom: 30px; font-style: italic; }
+        
+        .btn-container { display: flex; justify-content: center; gap: 20px; }
+        .btn { 
+            width: 140px; height: 140px; 
+            border-radius: 50%; border: none; 
+            font-size: 24px; font-weight: bold; color: white; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.95); box-shadow: none; }
+        .on { background-color: #28a745; border: 4px solid #1e7e34; }
+        .off { background-color: #dc3545; border: 4px solid #bd2130; }
     </style>
 </head>
 <body>
-    <h1>ĐIỀU KHIỂN ĐÈN</h1>
-    <h3 id="status" style="color: orange;">Đang kết nối...</h3>
-    
-    <button class="btn on" onclick="send('ON')">BẬT</button>
-    <button class="btn off" onclick="send('OFF')">TẮT</button>
+
+    <h1>ĐIỀU KHIỂN ĐÈN (EMQX)</h1>
+    <div id="status">Đang kết nối Server...</div>
+
+    <div class="btn-container">
+        <button class="btn on" onclick="send('ON')">BẬT</button>
+        <button class="btn off" onclick="send('OFF')">TẮT</button>
+    </div>
 
     <script>
-        // --- CẤU HÌNH PHẢI KHỚP CODE ESP32 ---
-        const mqtt_topic = "phamtuan_k6/den_led_onboard";
+        // --- CẤU HÌNH KHỚP VỚI ESP32 ---
+        const mqtt_topic = "phamtuan_k6/den_led_onboard"; // Khớp với code ESP32
         const broker = "broker.emqx.io";
-        const port = 8084; // Cổng bảo mật WSS (QUAN TRỌNG)
+        const port = 8084; // Cổng WSS bảo mật (đừng đổi)
+        const path = "/mqtt"; // QUAN TRỌNG: EMQX bắt buộc có cái này
 
-        const clientID = "web_" + new Date().getTime();
-        const client = new Paho.MQTT.Client(broker, port, clientID);
+        const clientID = "web_client_" + new Date().getTime();
+        
+        // Khởi tạo client với đường dẫn path
+        const client = new Paho.MQTT.Client(broker, port, path, clientID);
 
-        client.connect({
-            useSSL: true, // Bắt buộc true để chạy trên GitHub Pages
-            onSuccess: function() {
-                document.getElementById("status").innerHTML = "Đã kết nối Server!";
-                document.getElementById("status").style.color = "green";
-            },
-            onFailure: function(e) {
-                document.getElementById("status").innerHTML = "Lỗi: " + e.errorMessage;
-                document.getElementById("status").style.color = "red";
-            }
-        });
+        // Các tùy chọn kết nối
+        const options = {
+            useSSL: true, // Bắt buộc cho GitHub Pages
+            timeout: 3,
+            onSuccess: onConnect,
+            onFailure: onFail
+        };
+
+        // Bắt đầu kết nối
+        client.connect(options);
+
+        function onConnect() {
+            document.getElementById("status").innerHTML = "ĐÃ KẾT NỐI THÀNH CÔNG!";
+            document.getElementById("status").style.color = "#00ff00"; // Màu xanh lá
+            console.log("Connected to EMQX via WSS");
+        }
+
+        function onFail(responseObject) {
+            document.getElementById("status").innerHTML = "LỖI: " + responseObject.errorMessage;
+            document.getElementById("status").style.color = "red";
+            console.log("Connection failed: " + responseObject.errorMessage);
+        }
 
         function send(cmd) {
             if (client.isConnected()) {
                 message = new Paho.MQTT.Message(cmd);
                 message.destinationName = mqtt_topic;
                 client.send(message);
+                console.log("Đã gửi lệnh: " + cmd);
+            } else {
+                alert("Chưa kết nối được Server!");
             }
         }
     </script>
+
 </body>
 </html>
