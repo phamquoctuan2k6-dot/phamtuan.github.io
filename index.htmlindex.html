@@ -1,26 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <title>ESP32 Remote</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body { font-family: Arial; text-align: center; padding-top: 50px; }
+        .btn { width: 120px; height: 120px; border-radius: 50%; font-size: 20px; margin: 10px; cursor: pointer; color: white; border: none;}
+        .on { background: green; }
+        .off { background: red; }
+    </style>
 </head>
 <body>
-    <h1 style="text-align:center;">Điều khiển ESP32</h1>
-
-    <div style="text-align:center;">
-        <button onclick="send('forward')">Tiến</button>
-        <button onclick="send('left')">Trái</button>
-        <button onclick="send('right')">Phải</button>
-        <button onclick="send('back')">Lùi</button>
-        <button onclick="send('stop')">Dừng</button>
-    </div>
+    <h1>ĐIỀU KHIỂN ĐÈN</h1>
+    <h3 id="status" style="color: orange;">Đang kết nối...</h3>
+    
+    <button class="btn on" onclick="send('ON')">BẬT</button>
+    <button class="btn off" onclick="send('OFF')">TẮT</button>
 
     <script>
+        // --- CẤU HÌNH PHẢI KHỚP CODE ESP32 ---
+        const mqtt_topic = "phamtuan_k6/den_led_onboard";
+        const broker = "broker.emqx.io";
+        const port = 8084; // Cổng bảo mật WSS (QUAN TRỌNG)
+
+        const clientID = "web_" + new Date().getTime();
+        const client = new Paho.MQTT.Client(broker, port, clientID);
+
+        client.connect({
+            useSSL: true, // Bắt buộc true để chạy trên GitHub Pages
+            onSuccess: function() {
+                document.getElementById("status").innerHTML = "Đã kết nối Server!";
+                document.getElementById("status").style.color = "green";
+            },
+            onFailure: function(e) {
+                document.getElementById("status").innerHTML = "Lỗi: " + e.errorMessage;
+                document.getElementById("status").style.color = "red";
+            }
+        });
+
         function send(cmd) {
-            fetch("http://192.168.1.xx/control?cmd=" + cmd);
-            // Nhớ đổi IP thành IP ESP32 của m
+            if (client.isConnected()) {
+                message = new Paho.MQTT.Message(cmd);
+                message.destinationName = mqtt_topic;
+                client.send(message);
+            }
         }
     </script>
-
 </body>
 </html>
