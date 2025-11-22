@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ESP32 Remote</title>
+</head>
+<body>
+    <h1 style="text-align:center;">Điều khiển ESP32</h1>
+
+    <div style="text-align:center;">
+        <button onclick="send('forward')">Tiến</button>
+        <button onclick="send('left')">Trái</button>
+        <button onclick="send('right')">Phải</button>
+        <button onclick="send('back')">Lùi</button>
+        <button onclick="send('stop')">Dừng</button>
+    </div>
+
+    <script>
+        function send(cmd) {
+            fetch("http://192.168.1.xx/control?cmd=" + cmd);
+            // Nhớ đổi IP thành IP ESP32 của m
+        }
+    </script>
+
+</body>
+</html>
