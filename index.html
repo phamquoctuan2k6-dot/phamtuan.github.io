@@ -1,21 +1,18 @@
 <script>
-        // --- CẤU HÌNH ---
+        // --- CẤU HÌNH MỚI (Dùng EMQX để không bị chặn) ---
         const mqtt_topic = "phamtuan_k6/den_led_onboard"; 
-        const broker = "broker.hivemq.com";
-        
-        // SỬA 1: Đổi cổng sang 8884 (Cổng bảo mật WSS)
-        const port = 8884; 
+        const broker = "broker.emqx.io";  // Đổi sang server này
+        const port = 8084;  // Cổng bảo mật WSS (Quan trọng!)
 
         const clientID = "web_led_" + new Date().getTime();
         const client = new Paho.MQTT.Client(broker, port, clientID);
 
         // Hàm kết nối
         client.connect({
-            useSSL: true,  // SỬA 2: Thêm dòng này bắt buộc cho GitHub Pages
+            useSSL: true, // BẮT BUỘC PHẢI CÓ
             onSuccess: function() {
-                document.getElementById("status").innerHTML = "Đã kết nối Server!";
+                document.getElementById("status").innerHTML = "Đã kết nối (Bảo mật)!";
                 document.getElementById("status").style.color = "green";
-                console.log("Connected via WSS");
             },
             onFailure: function(e) {
                 document.getElementById("status").innerHTML = "Lỗi: " + e.errorMessage;
@@ -24,12 +21,13 @@
             }
         });
 
-        // ... (Phần hàm send giữ nguyên) ...
+        // Các phần còn lại giữ nguyên...
         function send(cmd) {
             if (client.isConnected()) {
                 message = new Paho.MQTT.Message(cmd);
                 message.destinationName = mqtt_topic;
                 client.send(message);
+                console.log("Đã gửi: " + cmd);
             }
         }
     </script>
