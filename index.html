@@ -1,86 +1,61 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Robot Controller</title>
+    <title>ESP32 LED Control</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-    
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding-top: 20px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f4; }
         h1 { color: #333; }
-        .control-panel {
-            display: grid;
-            grid-template-columns: 80px 80px 80px;
-            grid-template-rows: 80px 80px 80px;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
+        .btn {
+            display: inline-block; width: 150px; height: 150px;
+            margin: 20px; border-radius: 50%; border: none;
+            font-size: 24px; font-weight: bold; color: white;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
         }
-        button {
-            padding: 15px; font-size: 16px; cursor: pointer;
-            border: none; border-radius: 10px; background-color: #007bff; color: white;
-            font-weight: bold; box-shadow: 0 4px #0056b3;
-        }
-        button:active { box-shadow: 0 2px #0056b3; transform: translateY(2px); }
-        .stop-btn { background-color: #dc3545; box-shadow: 0 4px #a71d2a; }
-        .stop-btn:active { box-shadow: 0 2px #a71d2a; }
-        
-        /* Căn chỉnh vị trí các nút */
-        .btn-up { grid-column: 2; grid-row: 1; }
-        .btn-left { grid-column: 1; grid-row: 2; }
-        .btn-stop { grid-column: 2; grid-row: 2; }
-        .btn-right { grid-column: 3; grid-row: 2; }
-        .btn-down { grid-column: 2; grid-row: 3; }
-        
-        #status { margin-top: 20px; color: gray; font-size: 14px; }
+        .btn:active { transform: scale(0.95); }
+        .btn-on { background-color: #28a745; } /* Màu xanh lá */
+        .btn-off { background-color: #dc3545; } /* Màu đỏ */
+        #status { margin-top: 20px; font-size: 18px; color: gray; }
     </style>
 </head>
 <body>
 
-    <h1>ĐIỀU KHIỂN ROBOT</h1>
-    <div id="status">Đang kết nối Server...</div>
-
-    <div class="control-panel">
-        <button class="btn-up" ontouchstart="send('forward')" onmousedown="send('forward')" onmouseup="send('stop')" ontouchend="send('stop')">TIẾN</button>
-        
-        <button class="btn-left" ontouchstart="send('left')" onmousedown="send('left')" onmouseup="send('stop')" ontouchend="send('stop')">TRÁI</button>
-        
-        <button class="btn-stop stop-btn" onclick="send('stop')">DỪNG</button>
-        
-        <button class="btn-right" ontouchstart="send('right')" onmousedown="send('right')" onmouseup="send('stop')" ontouchend="send('stop')">PHẢI</button>
-        
-        <button class="btn-down" ontouchstart="send('back')" onmousedown="send('back')" onmouseup="send('stop')" ontouchend="send('stop')">LÙI</button>
-    </div>
+    <h1>ĐIỀU KHIỂN ĐÈN ESP32</h1>
+    <div id="status">Đang kết nối...</div>
+    
+    <br>
+    <button class="btn btn-on" onclick="send('ON')">BẬT</button>
+    <button class="btn btn-off" onclick="send('OFF')">TẮT</button>
 
     <script>
-        // --- CẤU HÌNH (Sửa lại Topic của bạn) ---
-        const mqtt_topic = "phamtuan_k6_automation/robot/control"; 
+        // --- CẤU HÌNH (Quan trọng) ---
+        const mqtt_topic = "phamtuan_k6/den_led_onboard"; // <<< Topic này phải trùng với ESP32
         const broker = "broker.hivemq.com";
-        const port = 8000;
+        const port = 8000; // Cổng WebSocket
 
-        const clientID = "web_robot_" + new Date().getTime();
+        const clientID = "web_led_" + new Date().getTime();
         const client = new Paho.MQTT.Client(broker, port, clientID);
 
-        client.onConnectionLost = function(responseObject) {
-            document.getElementById("status").innerHTML = "Mất kết nối!";
-            document.getElementById("status").style.color = "red";
-        };
-
+        // Hàm kết nối
         client.connect({onSuccess: function() {
-            document.getElementById("status").innerHTML = "Đã kết nối & Sẵn sàng!";
+            document.getElementById("status").innerHTML = "Đã kết nối Server!";
             document.getElementById("status").style.color = "green";
         }});
 
+        // Hàm gửi lệnh
         function send(cmd) {
             if (client.isConnected()) {
                 message = new Paho.MQTT.Message(cmd);
                 message.destinationName = mqtt_topic;
                 client.send(message);
-                console.log("Gửi lệnh: " + cmd);
+                console.log("Đã gửi: " + cmd);
+            } else {
+                alert("Chưa kết nối được Server!");
             }
         }
     </script>
-
 </body>
 </html>
